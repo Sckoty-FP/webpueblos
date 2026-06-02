@@ -1,0 +1,18 @@
+{
+  "name": "PUEBLO",
+  "short_name": "PUEBLO",
+  "description": "La plataforma de los pueblos mediterráneos. Gastronomía, actividades, servicios y muro social.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0070cc",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

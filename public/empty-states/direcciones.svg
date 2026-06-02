@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <rect width="200" height="160" fill="#f5f7fa"/>
+  <path d="M100 30 C84 30 72 42 72 58 C72 78 100 110 100 110 C100 110 128 78 128 58 C128 42 116 30 100 30Z" fill="#e8edf3" stroke="#b0bcc9" stroke-width="1.5"/>
+  <circle cx="100" cy="58" r="10" fill="#b0bcc9"/>
+  <text x="100" y="132" font-family="serif" font-size="10" fill="#9aa5b4" text-anchor="middle">Sin direcciones guardadas</text>
+</svg>

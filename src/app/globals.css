@@ -1,26 +1,178 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+/* ─── CSS Variables (for inline style access) ────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary:        #0070cc;
+  --color-primary-hover:  #1eaedb;
+  --color-commerce:       #d53b00;
+  --color-commerce-active:#aa2f00;
+  --color-accent-warm:    #B8956A;
+  --color-surface-dark:   #121314;
+  --color-fog:            #f5f7fa;
+  --color-divisor:        #f3f3f3;
+  --color-text-body:      #1f1f1f;
+  --color-text-muted:     #6b6b6b;
+  --color-text-subtle:    #cccccc;
+  --color-error:          #c81b3a;
+  --color-success:        #059669;
+  --color-warning:        #d97706;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #000;
+  color: var(--color-text-body);
+  font-family: var(--font-barlow);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ─── Typography classes ─────────────────────────────────────────────────────── */
+.display-hero {
+  font-family: var(--font-fraunces);
+  font-weight: 600;
+  font-size: clamp(42px, 6vw, 72px);
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+}
+
+.display-section {
+  font-family: var(--font-fraunces);
+  font-weight: 600;
+  font-size: clamp(32px, 4vw, 54px);
+  line-height: 1.1;
+}
+
+.display-module {
+  font-family: var(--font-fraunces);
+  font-weight: 600;
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.15;
+}
+
+.display-barlow {
+  font-family: var(--font-barlow);
+  font-weight: 300;
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.15;
+}
+
+/* ─── Photo placeholders (gradient stand-ins for real photos) ────────────────── */
+.photo-hero  { background: linear-gradient(160deg, #0f3460 0%, #16213e 30%, #1a5276 55%, #2e86ab 75%, #B8956A 100%); }
+.photo-rest  { background: linear-gradient(135deg, #1a3a4c 0%, #2d6a8a 50%, #e8c88a 100%); }
+.photo-beach { background: linear-gradient(160deg, #006994 0%, #0099cc 40%, #7dd3f0 70%, #f5deb3 100%); }
+.photo-hotel { background: linear-gradient(135deg, #3d5a80 0%, #98c1d9 60%, #e0c89c 100%); }
+.photo-surf  { background: linear-gradient(160deg, #006080 0%, #008db9 45%, #5cc8e8 80%, #f5e6cc 100%); }
+.photo-bar   { background: linear-gradient(135deg, #1a1a2e 0%, #e94560 40%, #f5a623 100%); }
+.photo-apt   { background: linear-gradient(135deg, #0a4060 0%, #1a7fa8 50%, #a8d8ea 80%, #ffecd2 100%); }
+.photo-apt2  { background: linear-gradient(135deg, #1a3a2a 0%, #2d7a5a 50%, #a8d8c0 80%, #ffecd2 100%); }
+.photo-apt3  { background: linear-gradient(160deg, #3d2b1a 0%, #8a5a2a 50%, #d4a050 80%, #ffecd2 100%); }
+.photo-apt4  { background: linear-gradient(135deg, #1a1a3a 0%, #3a3a8a 50%, #8a8ad4 80%, #e0e0ff 100%); }
+.photo-ruta1 { background: linear-gradient(160deg, #0a3d0a 0%, #1a7a2a 45%, #4db84d 75%, #c8e6c9 100%); }
+.photo-ruta2 { background: linear-gradient(135deg, #006994 0%, #0099cc 50%, #7dd3f0 100%); }
+.photo-ruta3 { background: linear-gradient(160deg, #4a2000 0%, #a05000 50%, #d4900a 80%, #ffd54f 100%); }
+.photo-ruta4 { background: linear-gradient(135deg, #1a2a3a 0%, #2a5a8a 50%, #5a9abf 100%); }
+.photo-muro1 { background: linear-gradient(160deg, #1a3a5c 0%, #2874a6 40%, #5dade2 70%, #f9e4b7 100%); }
+.photo-muro2 { background: linear-gradient(135deg, #784212 0%, #d4700a 50%, #f5cba7 100%); }
+.photo-muro3 { background: linear-gradient(160deg, #0b3d6b 0%, #1565c0 40%, #42a5f5 70%, #e3f2fd 100%); }
+.photo-muro4 { background: linear-gradient(135deg, #2d6a4f 0%, #52b788 50%, #d8f3dc 100%); }
+.photo-muro5 { background: linear-gradient(160deg, #7b2d8b 0%, #e040fb 50%, #ff8f00 100%); }
+.photo-muro6 { background: linear-gradient(135deg, #0d4f4f 0%, #00796b 50%, #80cbc4 100%); }
+
+/* ─── Animations ─────────────────────────────────────────────────────────────── */
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.heart-pop { animation: heart-pop 300ms ease; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.pulse-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: pulse-dot 1.6s ease infinite;
+}
+
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(5px); }
+}
+.scroll-indicator { animation: scroll-bounce 2s ease infinite; }
+
+/* ─── Layout helpers ─────────────────────────────────────────────────────────── */
+.container-app {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+@media (min-width: 768px) {
+  .container-app { padding-inline: 2rem; }
+}
+
+/* Generic photo fallback (used when imagenUrl is null) */
+.photo-fallback {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+}
+
+/* ─── Scrollbar hide ──────────────────────────────────────────────────────────── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* ─── Legal prose ────────────────────────────────────────────────────────────── */
+.legal-prose {
+  @apply font-barlow text-base text-text-body leading-relaxed max-w-prose;
+}
+.legal-prose h2 {
+  @apply font-fraunces font-semibold text-2xl text-text-body mt-10 mb-3 leading-tight;
+}
+.legal-prose h3 {
+  @apply font-fraunces font-semibold text-xl text-text-body mt-7 mb-2 leading-tight;
+}
+.legal-prose p {
+  @apply mb-4;
+}
+.legal-prose ul {
+  @apply list-disc pl-6 mb-4 flex flex-col gap-1.5;
+}
+.legal-prose ol {
+  @apply list-decimal pl-6 mb-4 flex flex-col gap-1.5;
+}
+.legal-prose a {
+  @apply text-primary hover:underline;
+}
+.legal-prose strong {
+  @apply font-semibold;
+}
+.legal-prose code {
+  @apply font-mono text-sm bg-fog px-1.5 py-0.5 rounded;
+}
+.legal-prose hr {
+  @apply border-divisor my-8;
+}
+.legal-prose table {
+  @apply w-full border-collapse my-4;
+}
+.legal-prose th {
+  @apply font-barlow font-semibold text-sm px-3 py-2 border-b border-divisor bg-fog text-left;
+}
+.legal-prose td {
+  @apply text-sm px-3 py-2 border-b border-divisor;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }

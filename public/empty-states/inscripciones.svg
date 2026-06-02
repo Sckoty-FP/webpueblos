@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <rect width="200" height="160" fill="#f5f7fa"/>
+  <circle cx="100" cy="72" r="38" fill="#e8edf3"/>
+  <path d="M100 54 L106 68 L122 68 L110 77 L114 91 L100 82 L86 91 L90 77 L78 68 L94 68Z" fill="#d0d8e2"/>
+  <text x="100" y="128" font-family="serif" font-size="10" fill="#9aa5b4" text-anchor="middle">Sin inscripciones</text>
+</svg>

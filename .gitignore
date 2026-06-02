@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# test artifacts
+/test-results/
+/playwright-report/
+
+# stray dev logs (windows bad-path artifacts)
+*nextjs-dev.log
