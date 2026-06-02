@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import RegistroForm from "@/components/sections/auth/RegistroForm";
 
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function RegistroPage() {
-  return <RegistroForm />;
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <RegistroForm />
+    </Suspense>
+  );
 }
