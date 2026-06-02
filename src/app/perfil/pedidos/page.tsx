@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/format/currency";
 import { formatAbsolute } from "@/lib/format/relative-date";
 import type { EstadoPedidoDelivery } from "@/types/delivery";
 
-export const metadata: Metadata = { title: "Mis pedidos · PUEBLO" };
+export const metadata: Metadata = { title: "Mis pedidos" };
 
 const ESTADO_STYLE: Record<EstadoPedidoDelivery, { bg: string; color: string; label: string }> = {
   pendiente_pago: { bg: "#fffbeb", color: "#d97706", label: "Pendiente de pago" },

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import RegistroForm from "@/components/sections/auth/RegistroForm";
 
 export const metadata: Metadata = {
-  title: "Crear cuenta — Alcocèber · PUEBLO",
+  title: "Crear cuenta — Alcocèber",
 };
 
 export default function RegistroPage() {

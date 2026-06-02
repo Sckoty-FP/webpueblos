@@ -7,7 +7,7 @@ import {
 } from "@/lib/supabase/queries/delivery";
 import DetallePedidoView from "@/components/delivery/repartidor/DetallePedidoView";
 
-export const metadata: Metadata = { title: "Detalle pedido · Repartidor · PUEBLO" };
+export const metadata: Metadata = { title: "Detalle pedido · Repartidor" };
 
 export default async function DetallePedidoPage({
   params,

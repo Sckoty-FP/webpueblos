@@ -8,7 +8,7 @@ import {
 } from "@/lib/supabase/queries/delivery";
 import RepartidorHome from "@/components/delivery/repartidor/RepartidorHome";
 
-export const metadata: Metadata = { title: "Portal Repartidor · PUEBLO" };
+export const metadata: Metadata = { title: "Portal Repartidor" };
 
 export default async function RepartidorPage() {
   const supabase = await createClient();
