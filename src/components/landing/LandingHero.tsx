@@ -96,40 +96,22 @@ export default function LandingHero({ pueblos }: Props) {
 
       {/* Content */}
       <div className="relative z-10 min-h-screen max-h-[920px] flex flex-col items-center justify-center px-4 text-center">
-        <motion.span
-          className="block uppercase tracking-[0.18em] text-sm font-fraunces text-accent-warm mb-6"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        {/* Texto del hero: render inmediato (sin animación de entrada) para no
+            retrasar el LCP. El H1 es el elemento LCP y debe pintarse al instante. */}
+        <span className="block uppercase tracking-[0.18em] text-sm font-fraunces text-accent-warm mb-6">
           Mediterráneo
-        </motion.span>
+        </span>
 
-        <motion.h1
-          className="display-hero text-white max-w-[720px] mb-6"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-        >
+        <h1 className="display-hero text-white max-w-[720px] mb-6">
           Conocé el pueblo que<br />te quedaba por descubrir.
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          className="font-barlow text-lg md:text-xl font-light text-white/85 max-w-[560px] mb-10"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-        >
+        <p className="font-barlow text-lg md:text-xl font-light text-white/85 max-w-[560px] mb-10">
           Plataforma turística, comercio y comunidad del Mediterráneo español.
           Un pueblo, una experiencia.
-        </motion.p>
+        </p>
 
-        <motion.div
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-        >
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <a
             href="#pueblos"
             className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-barlow font-medium px-7 py-3 rounded-pill transition-all duration-180 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
@@ -143,7 +125,7 @@ export default function LandingHero({ pueblos }: Props) {
           >
             Soy negocio
           </Link>
-        </motion.div>
+        </div>
 
         {/* Dots paginación */}
         {fotos.length > 1 && (
