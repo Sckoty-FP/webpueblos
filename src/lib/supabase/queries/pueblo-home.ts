@@ -245,20 +245,28 @@ export async function getActividadesPreview(
     return [];
   }
 
+  // Una tarjeta por prestador (no por servicio). El detalle de actividad
+  // (`/[pueblo]/actividades/[id]` → getActividadCompleta) resuelve SIEMPRE por
+  // `prestadores.id`, así que el `id` del item DEBE ser el del prestador. Antes se
+  // usaba `s.id` (id del servicio) y el link generaba un 404 (el listado y el detalle
+  // usan prestador.id). Emitir una sola card por prestador también evita keys de React
+  // duplicadas cuando un negocio tiene varios servicios de actividad.
   const items: ActividadPreview[] = (prestadores ?? []).flatMap((p: Record<string, unknown>) => {
-    const servicios = (p.servicios as Array<Record<string, unknown>>) ?? [];
-    return servicios
-      .filter(s => s.activo && CATS_ACTIVIDADES.has(s.categoria as CategoriaServicio))
-      .map(s => ({
-        id: s.id as string,
-        slug: p.slug as string,
-        nombre: (s.nombre as string) || (p.nombre as string),
-        descripcionCorta: (p.descripcion_corta as string | null) ?? null,
-        imagenUrl: (p.imagen_portada_url as string | null) ?? null,
-        tipoRecursoLabel: labelForCategoriaActividad(s.categoria as string),
-        precioDesdeEur: (s.precio_desde as number | null) ?? null,
-        capacidadMaxima: (s.capacidad_maxima as number | null) ?? null,
-      }));
+    const serviciosActividad = ((p.servicios as Array<Record<string, unknown>>) ?? [])
+      .filter(s => s.activo && CATS_ACTIVIDADES.has(s.categoria as CategoriaServicio));
+    if (serviciosActividad.length === 0) return [];
+
+    const principal = serviciosActividad[0];
+    return [{
+      id: p.id as string,
+      slug: p.slug as string,
+      nombre: (p.nombre as string) || (principal.nombre as string),
+      descripcionCorta: (p.descripcion_corta as string | null) ?? null,
+      imagenUrl: (p.imagen_portada_url as string | null) ?? null,
+      tipoRecursoLabel: labelForCategoriaActividad(principal.categoria as string),
+      precioDesdeEur: (principal.precio_desde as number | null) ?? null,
+      capacidadMaxima: (principal.capacidad_maxima as number | null) ?? null,
+    }];
   });
 
   if (opts.limit && opts.limit > 0) {

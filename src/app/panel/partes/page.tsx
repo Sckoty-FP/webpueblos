@@ -28,10 +28,23 @@ export default async function PanelPartesPage({ searchParams }: Props) {
   const prestador = await getPrestadorDelUsuario();
   if (!prestador) redirect("/auth/login");
 
-  const [partes, aceptados] = await Promise.all([
+  const [partesRaw, aceptados] = await Promise.all([
     getPartesDelPrestador(prestador.id),
     getPresupuestosDelPrestador(prestador.id, "aceptado"),
   ]);
+
+  // SEC-008: firmas-partes es un bucket PRIVADO. La firma se persiste como PATH
+  // (no como URL); la firmamos a demanda (1h) para que el <img> del panel la
+  // muestre. Las filas viejas con URL pública (http...) se dejan tal cual.
+  const partes = await Promise.all(
+    partesRaw.map(async (pt) => {
+      if (!pt.cliente_firma_url || pt.cliente_firma_url.startsWith("http")) return pt;
+      const { data } = await supabase.storage
+        .from("firmas-partes")
+        .createSignedUrl(pt.cliente_firma_url, 3600);
+      return { ...pt, cliente_firma_url: data?.signedUrl ?? pt.cliente_firma_url };
+    }),
+  );
 
   // Presupuestos aceptados disponibles para vincular a un parte nuevo
   const presupuestosOpen = aceptados.map(p => ({
@@ -108,9 +121,13 @@ export default async function PanelPartesPage({ searchParams }: Props) {
 
       if (upErr) return { ok: false, error: upErr.message };
 
-      const { data: urlData } = sb.storage.from("firmas-partes").getPublicUrl(path);
-      await actualizarFirmaYFotos(id, urlData.publicUrl, undefined);
-      return { ok: true, url: urlData.publicUrl };
+      // SEC-008: firmas-partes es privado. Guardamos el PATH (no una URL) y
+      // firmamos a demanda al mostrarlo, igual que presupuestos-pdf (SEC-002b).
+      await actualizarFirmaYFotos(id, path, undefined);
+      const { data: signed } = await sb.storage
+        .from("firmas-partes")
+        .createSignedUrl(path, 3600);
+      return { ok: true, url: signed?.signedUrl };
     } catch (e) {
       return { ok: false, error: (e as Error).message };
     }
@@ -128,16 +145,27 @@ export default async function PanelPartesPage({ searchParams }: Props) {
       const parte = await getParte(id);
       if (!parte) return { ok: false, error: "Parte no encontrado" };
 
+      const sb = await createClient();
+
+      // SEC-008: firmas-partes es privado. La firma vive como PATH; la firmamos
+      // a demanda para que @react-pdf pueda fetchearla y embeberla en el PDF.
+      let parteParaPdf = parte;
+      if (parte.cliente_firma_url && !parte.cliente_firma_url.startsWith("http")) {
+        const { data: firma } = await sb.storage
+          .from("firmas-partes")
+          .createSignedUrl(parte.cliente_firma_url, 3600);
+        parteParaPdf = { ...parte, cliente_firma_url: firma?.signedUrl ?? null };
+      }
+
       const { renderToBuffer } = await import("@react-pdf/renderer");
       const { PartePDF } = await import("@/lib/pdf/PartePDF");
       const React = await import("react");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const buffer = await renderToBuffer(
-        React.createElement(PartePDF, { parte, negocioNombre: p.nombre }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        React.createElement(PartePDF, { parte: parteParaPdf, negocioNombre: p.nombre }) as any,
       );
 
-      const sb   = await createClient();
       const path = `${p.id}/${parte.numero}.pdf`;
 
       const { error: uploadError } = await sb.storage
@@ -146,8 +174,11 @@ export default async function PanelPartesPage({ searchParams }: Props) {
 
       if (uploadError) return { ok: false, error: uploadError.message };
 
-      const { data: urlData } = sb.storage.from("partes-fotos").getPublicUrl(path);
-      return { ok: true, url: urlData.publicUrl };
+      // partes-fotos también es privado (SEC-008): URL firmada, no pública.
+      const { data: signed } = await sb.storage
+        .from("partes-fotos")
+        .createSignedUrl(path, 3600);
+      return { ok: true, url: signed?.signedUrl };
     } catch (e) {
       return { ok: false, error: (e as Error).message };
     }

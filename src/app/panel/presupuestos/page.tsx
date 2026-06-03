@@ -112,8 +112,8 @@ export default async function PanelPresupuestosPage() {
       const { PresupuestoPDF } = await import("@/lib/pdf/PresupuestoPDF");
       const React = await import("react");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const buffer = await renderToBuffer(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         React.createElement(PresupuestoPDF, { presupuesto: pre, negocioNombre: p.nombre }) as any,
       );
 
@@ -127,14 +127,42 @@ export default async function PanelPresupuestosPage() {
 
       if (uploadError) return { ok: false, error: uploadError.message };
 
-      const { data: urlData } = sb.storage.from("presupuestos-pdf").getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-
-      await actualizarPdfUrl(id, publicUrl);
-      return { ok: true, url: publicUrl };
+      // SEC-002b: bucket privado. Guardamos el path (no una URL pública) y
+      // servimos con URL firmada a demanda (createSignedUrl, 1h).
+      await actualizarPdfUrl(id, path);
+      const { data: signed } = await sb.storage
+        .from("presupuestos-pdf")
+        .createSignedUrl(path, 3600);
+      return { ok: true, url: signed?.signedUrl };
     } catch (e) {
       return { ok: false, error: (e as Error).message };
     }
+  }
+
+  // SEC-002b: genera una URL firmada fresca para ver un PDF ya existente. El path
+  // se reconstruye desde el prestador logueado + el número, así no importa qué se
+  // haya guardado antes en pdf_url (incluso URLs públicas viejas dejan de exponer).
+  async function handleVerPdf(
+    id: string,
+  ): Promise<{ ok: boolean; url?: string; error?: string }> {
+    "use server";
+    const p = await getPrestadorDelUsuario();
+    if (!p) return { ok: false, error: "Sin negocio" };
+
+    const { getPresupuesto } = await import("@/lib/supabase/queries/presupuestos");
+    const pre = await getPresupuesto(id);
+    if (!pre) return { ok: false, error: "Presupuesto no encontrado" };
+
+    const { createClient: createSB } = await import("@/lib/supabase/server");
+    const sb = await createSB();
+    const path = `${p.id}/${pre.numero}.pdf`;
+    const { data, error } = await sb.storage
+      .from("presupuestos-pdf")
+      .createSignedUrl(path, 3600);
+    if (error || !data) {
+      return { ok: false, error: error?.message ?? "No se pudo generar el enlace" };
+    }
+    return { ok: true, url: data.signedUrl };
   }
 
   async function handleCrearParte(presupuestoId: string) {
@@ -162,6 +190,7 @@ export default async function PanelPresupuestosPage() {
         onActualizar={handleActualizar}
         onEnviar={handleEnviar}
         onGenerarPDF={handleGenerarPDF}
+        onVerPdf={handleVerPdf}
         onCrearParte={handleCrearParte}
         appUrl={appUrl}
       />

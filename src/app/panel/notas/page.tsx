@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getPrestadorDelUsuario } from "@/lib/supabase/queries/panel";
 import { getPrestadorComoEncargado } from "@/lib/supabase/queries/equipo";
@@ -46,26 +47,32 @@ export default async function PanelNotasPage() {
       importante: formData.get("importante") === "1",
       recordatorio_fecha: (formData.get("recordatorio_fecha") as string) || undefined,
     });
+    // Revalidar para que la lista refleje la nota nueva sin recargar a mano.
+    revalidatePath("/panel/notas");
   }
 
   async function handleActualizar(id: string, data: Partial<NotaNegocioDB>) {
     "use server";
     await actualizarNota(id, data);
+    revalidatePath("/panel/notas");
   }
 
   async function handleCompletar(id: string) {
     "use server";
     await marcarRecordatorioCompletado(id);
+    revalidatePath("/panel/notas");
   }
 
   async function handlePosponer(id: string) {
     "use server";
     await posponerRecordatorio(id, 1);
+    revalidatePath("/panel/notas");
   }
 
   async function handleEliminar(id: string) {
     "use server";
     await eliminarNota(id);
+    revalidatePath("/panel/notas");
   }
 
   return (

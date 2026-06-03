@@ -47,7 +47,9 @@ export default function TabDirecciones({ direcciones }: { direcciones: Direccion
                 {[d.piso, d.codigo_postal].filter(Boolean).join(" · ")}
               </p>
             )}
-            <p className="font-barlow text-[11px] text-text-muted mt-1">{d.pueblo_nombre}</p>
+            {d.pueblo_nombre && (
+              <p className="font-barlow text-[11px] text-text-muted mt-1">{d.pueblo_nombre}</p>
+            )}
           </div>
           <button
             onClick={() => {

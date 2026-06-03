@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import Turnstile, { captchaEnabled } from "@/components/system/Turnstile";
 
 type Field = "nombre" | "email" | "password" | "confirm";
 type Errors = Partial<Record<Field, string>>;
@@ -53,6 +54,13 @@ export default function RegistroForm() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaKey, setCaptchaKey] = useState(0);
+
+  function resetCaptcha() {
+    setCaptchaToken("");
+    setCaptchaKey((k) => k + 1);
+  }
 
   function clear(field: Field) {
     setErrors((p) => ({ ...p, [field]: undefined }));
@@ -62,6 +70,7 @@ export default function RegistroForm() {
     e.preventDefault();
     const errs = validate(nombre, email, password, confirm);
     if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (captchaEnabled && !captchaToken) { setAuthError("Completá la verificación de seguridad"); return; }
     setErrors({});
     setAuthError("");
     setLoading(true);
@@ -75,6 +84,7 @@ export default function RegistroForm() {
           nombre,
           tipo,
         },
+        ...(captchaEnabled ? { captchaToken } : {}),
       },
     });
 
@@ -84,6 +94,7 @@ export default function RegistroForm() {
           ? "Este email ya tiene una cuenta. ¿Querés iniciar sesión?"
           : "Error al crear la cuenta. Intentá de nuevo."
       );
+      resetCaptcha();
       setLoading(false);
       return;
     }
@@ -248,7 +259,9 @@ export default function RegistroForm() {
                   </p>
                 )}
 
-                <button type="submit" disabled={loading}
+                <Turnstile key={captchaKey} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+
+                <button type="submit" disabled={loading || (captchaEnabled && !captchaToken)}
                   className="w-full font-barlow font-bold text-[15px] text-white bg-primary rounded-pill py-3.5 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (

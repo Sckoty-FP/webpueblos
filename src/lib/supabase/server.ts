@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+/**
+ * Cliente de Supabase para el SERVIDOR (Server Components, Server Actions, Route
+ * Handlers). Usa la anon key + las cookies de sesión, así que corre **como el
+ * usuario logueado** y respeta RLS. Es el cliente seguro por defecto: usalo
+ * siempre que puedas en vez del Admin (service-role).
+ */
 export async function createClient() {
   const cookieStore = await cookies();
 

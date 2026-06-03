@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import Turnstile, { captchaEnabled } from "@/components/system/Turnstile";
 
 function validateEmail(email: string): string | undefined {
   if (!email) return "El email es requerido";
@@ -15,17 +16,22 @@ export default function RecuperarForm() {
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const err = validateEmail(email);
     if (err) { setError(err); return; }
+    if (captchaEnabled && !captchaToken) { setError("Completá la verificación de seguridad"); return; }
     setError(undefined);
     setLoading(true);
 
     const supabase = createClient();
     const redirectTo = `${window.location.origin}/auth/callback?next=/auth/nueva-clave`;
-    await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+      ...(captchaEnabled ? { captchaToken } : {}),
+    });
 
     // No revelamos si el email existe o no (evita enumeración de cuentas).
     setSent(true);
@@ -94,10 +100,12 @@ export default function RecuperarForm() {
                   {error && <p className="font-barlow text-[12px] text-red-600 mt-1">{error}</p>}
                 </div>
 
+                <Turnstile onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || (captchaEnabled && !captchaToken)}
                   className="w-full font-barlow font-bold text-[15px] text-white bg-primary rounded-pill py-3.5 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed mt-1 flex items-center justify-center gap-2"
                 >
                   {loading ? (

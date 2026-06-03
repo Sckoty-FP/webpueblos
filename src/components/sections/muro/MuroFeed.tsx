@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { uploadMuroImage } from "@/lib/supabase/storage";
+import { crearPostMuro } from "@/app/[pueblo]/muro/actions";
 import type { MuroPostDB, MuroComentarioDB } from "@/types";
 
 /* ─── Helpers ────────────────────────────────────────────────────────────────── */
@@ -446,6 +447,9 @@ function UploadModal({
       return;
     }
 
+    // La foto se sube desde el cliente (el bucket `muro` permite INSERT a
+    // authenticated). La CREACIÓN del post va por el server action crearPostMuro,
+    // que aplica rate-limit + validación Zod. No insertamos directo en la tabla.
     let imageUrl: string | null = null;
     if (photo) {
       imageUrl = await uploadMuroImage(user.id, photo);
@@ -456,27 +460,21 @@ function UploadModal({
       }
     }
 
-    const { data, error: err } = await supabase
-      .from("muro_posts")
-      .insert({
-        pueblo_id: puebloId,
-        autor_id: user.id,
-        tipo: "general",
-        contenido: text.trim() || " ",
-        imagenes_urls: imageUrl ? [imageUrl] : [],
-        aprobado: true,
-      })
-      .select("id, pueblo_id, autor_id, tipo, contenido, imagenes_urls, total_likes, total_comentarios, created_at")
-      .single();
+    const fd = new FormData();
+    fd.set("pueblo_id", String(puebloId));
+    fd.set("tipo", "general");
+    fd.set("contenido", text.trim());
+    if (imageUrl) fd.set("imagen_url", imageUrl);
 
-    if (err) {
-      setError("No se pudo publicar. Intentá de nuevo.");
+    const res = await crearPostMuro(fd);
+    if (!res.ok) {
+      setError(res.error);
       setLoading(false);
       return;
     }
 
     setPosted(true);
-    onPosted({ ...(data as MuroPostDB), autor: null });
+    onPosted(res.post);
     setTimeout(() => { setPosted(false); setText(""); removePhoto(); setLoading(false); onClose(); }, 1800);
   }
 

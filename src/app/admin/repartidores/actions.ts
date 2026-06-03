@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { createClient } from "@/lib/supabase/server";
+import { requireSuperAdmin } from "@/lib/auth/require-admin";
 
 export async function crearRepartidorAction(fd: FormData): Promise<{ ok: boolean; error?: string }> {
+  await requireSuperAdmin();   // SEC-001: service-role gateado por rol, no por el layout
   const nombre    = (fd.get("nombre")   as string)?.trim();
   const email     = (fd.get("email")    as string)?.trim();
   const password  = (fd.get("password") as string)?.trim();
@@ -96,6 +98,7 @@ export async function vincularRepartidorAction(
   puebloId: number,
   vehiculo: string = "moto",
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireSuperAdmin();   // SEC-001
   if (!usuarioId || !puebloId) return { ok: false, error: "usuario_id y pueblo_id son obligatorios." };
 
   const supabase = await createClient();
@@ -128,6 +131,7 @@ export async function adminAvanzarPedidoAction(
   nuevoEstado: string,
   repartidorId?: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireSuperAdmin();   // SEC-001: antes solo lo decía el comentario, ahora se impone
   const admin = createAdminClient();
 
   const updateData: Record<string, string> = { estado: nuevoEstado };
@@ -143,6 +147,7 @@ export async function adminAvanzarPedidoAction(
 }
 
 export async function editarRepartidorAction(fd: FormData): Promise<{ ok: boolean; error?: string }> {
+  await requireSuperAdmin();   // SEC-001
   const id        = fd.get("id")        as string;
   const nombre    = (fd.get("nombre")   as string)?.trim();
   const pueblo_id = parseInt(fd.get("pueblo_id") as string);

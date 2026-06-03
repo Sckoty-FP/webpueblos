@@ -45,13 +45,16 @@ export async function getPresupuesto(id: string): Promise<PresupuestoDB | null> 
   return data as PresupuestoDB;
 }
 
-/** Lookup por token para la página pública de aceptación (sin autenticación). */
+/**
+ * Lookup por token para la página pública de aceptación (cliente SIN cuenta).
+ * Va por la RPC `presupuesto_por_token` (SECURITY DEFINER): el anónimo no puede
+ * leer la tabla directo (RLS), y la función solo devuelve la fila del token
+ * exacto. Ver migración 044.
+ */
 export async function getPresupuestoByToken(token: string): Promise<PresupuestoDB | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("presupuestos")
-    .select("*")
-    .eq("token_aceptacion", token)
+    .rpc("presupuesto_por_token", { p_token: token })
     .single();
   if (error) return null;
   return data as PresupuestoDB;
@@ -157,43 +160,49 @@ export async function enviarPresupuesto(id: string): Promise<{ token: string; nu
   return { token, numero: (data as { numero: string }).numero };
 }
 
-/** Cambia estado a 'aceptado'. Llama desde la página pública (sin auth). */
+/**
+ * Acepta un presupuesto por token (página pública, sin auth). Vía RPC
+ * `presupuesto_aceptar_por_token` (SECURITY DEFINER), que valida estado y
+ * expiración de forma ATÓMICA en la base (sin carrera lectura→update). Ver 044.
+ */
 export async function aceptarPresupuesto(token: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
-
-  const pre = await getPresupuestoByToken(token);
-  if (!pre) return { ok: false, error: 'Presupuesto no encontrado.' };
-  if (pre.estado !== 'enviado') return { ok: false, error: 'El presupuesto ya no está en estado enviado.' };
-  if (pre.token_expira && new Date(pre.token_expira) < new Date()) {
-    return { ok: false, error: 'El enlace ha expirado. Contacta al profesional.' };
-  }
-
-  const { error } = await supabase
-    .from("presupuestos")
-    .update({ estado: 'aceptado' })
-    .eq("id", pre.id);
-
+  const { data, error } = await supabase.rpc("presupuesto_aceptar_por_token", { p_token: token });
   if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  return data as { ok: boolean; error?: string };
 }
 
-/** Cambia estado a 'rechazado'. */
+/** Rechaza un presupuesto por token (página pública). Vía RPC SECURITY DEFINER. */
 export async function rechazarPresupuesto(token: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
-
-  const pre = await getPresupuestoByToken(token);
-  if (!pre) return { ok: false, error: 'Presupuesto no encontrado.' };
-  if (!['enviado', 'aceptado'].includes(pre.estado)) {
-    return { ok: false, error: 'Este presupuesto no puede rechazarse en su estado actual.' };
-  }
-
-  const { error } = await supabase
-    .from("presupuestos")
-    .update({ estado: 'rechazado' })
-    .eq("id", pre.id);
-
+  const { data, error } = await supabase.rpc("presupuesto_rechazar_por_token", { p_token: token });
   if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  return data as { ok: boolean; error?: string };
+}
+
+/**
+ * Crea una SOLICITUD pública de presupuesto (cliente sin cuenta pide a un
+ * prestador). Vía RPC `solicitar_presupuesto_publico` (SECURITY DEFINER): el
+ * anónimo no puede insertar en la tabla (RLS) y la función solo permite crear
+ * una solicitud (borrador, importes en 0). Ver migración 044.
+ */
+export async function solicitarPresupuestoPublico(input: {
+  prestador_id:      string;
+  cliente_nombre:    string;
+  descripcion:       string;
+  cliente_email?:    string;
+  cliente_telefono?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("solicitar_presupuesto_publico", {
+    p_prestador_id:     input.prestador_id,
+    p_cliente_nombre:   input.cliente_nombre,
+    p_descripcion:      input.descripcion,
+    p_cliente_email:    input.cliente_email    ?? null,
+    p_cliente_telefono: input.cliente_telefono ?? null,
+  });
+  if (error) return { ok: false, error: error.message };
+  return data as { ok: boolean; error?: string };
 }
 
 /** Actualiza la URL del PDF generado. */

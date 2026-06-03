@@ -17,6 +17,7 @@ interface Props {
   onActualizar: (id: string, data: PresupuestoFormData) => Promise<{ ok: boolean; error?: string }>;
   onEnviar:     (id: string) => Promise<{ ok: boolean; link?: string; error?: string }>;
   onGenerarPDF: (id: string) => Promise<{ ok: boolean; url?: string; error?: string }>;
+  onVerPdf:     (id: string) => Promise<{ ok: boolean; url?: string; error?: string }>;
   onCrearParte: (presupuestoId: string) => void;
   appUrl:       string;
 }
@@ -288,6 +289,7 @@ function PresupuestoRow({
   onEnviar,
   onCrearParte,
   onGenerarPDF,
+  onVerPdf,
 }: {
   pre:          PresupuestoDB;
   esSolicitud:  boolean;
@@ -295,6 +297,7 @@ function PresupuestoRow({
   onEnviar:     () => void;
   onCrearParte: () => void;
   onGenerarPDF: () => void;
+  onVerPdf:     (id: string) => Promise<{ ok: boolean; url?: string; error?: string }>;
 }) {
   const [copied, setCopied]   = useState(false);
   const [pending, start]      = useTransition();
@@ -356,10 +359,14 @@ function PresupuestoRow({
             </button>
           )}
           {pre.pdf_url ? (
-            <a href={pre.pdf_url} target="_blank" rel="noreferrer"
-              className="w-7 h-7 rounded-[7px] border border-[#e5e5e5] flex items-center justify-center text-text-muted hover:border-[#ccc] transition-colors no-underline">
+            <button
+              onClick={async () => {
+                const r = await onVerPdf(pre.id);
+                if (r.ok && r.url) window.open(r.url, "_blank", "noopener");
+              }}
+              className="w-7 h-7 rounded-[7px] border border-[#e5e5e5] flex items-center justify-center text-text-muted hover:border-[#ccc] transition-colors">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            </a>
+            </button>
           ) : (
             <button onClick={onGenerarPDF}
               className="w-7 h-7 rounded-[7px] border border-[#e5e5e5] flex items-center justify-center text-text-muted hover:border-[#ccc] transition-colors">
@@ -378,7 +385,7 @@ function PresupuestoRow({
 
 export default function PresupuestosView({
   solicitudes, borradores, enviados, aceptados, archivados,
-  onCrear, onActualizar, onEnviar, onGenerarPDF, onCrearParte, appUrl,
+  onCrear, onActualizar, onEnviar, onGenerarPDF, onVerPdf, onCrearParte, appUrl,
 }: Props) {
   const [tab,     setTab]     = useState<Tab>("solicitudes");
   const [modal,   setModal]   = useState<PresupuestoDB | null | "nuevo">(null);
@@ -521,6 +528,7 @@ export default function PresupuestosView({
               onEnviar={() => handleEnviar(pre)}
               onCrearParte={() => onCrearParte(pre.id)}
               onGenerarPDF={() => handleGenerarPDF(pre)}
+              onVerPdf={onVerPdf}
             />
           ))
         )}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import Turnstile, { captchaEnabled } from "@/components/system/Turnstile";
 
 type Field = "email" | "password";
 type Errors = Partial<Record<Field, string>>;
@@ -27,20 +28,33 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaKey, setCaptchaKey] = useState(0);
+
+  function resetCaptcha() {
+    setCaptchaToken("");
+    setCaptchaKey((k) => k + 1);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate(email, password);
     if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (captchaEnabled && !captchaToken) { setAuthError("Completá la verificación de seguridad"); return; }
     setErrors({});
     setAuthError("");
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaEnabled ? { options: { captchaToken } } : {}),
+    });
 
     if (error) {
       setAuthError("Email o contraseña incorrectos");
+      resetCaptcha();
       setLoading(false);
       return;
     }
@@ -160,10 +174,12 @@ export default function LoginForm() {
                   </p>
                 )}
 
+                <Turnstile key={captchaKey} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || (captchaEnabled && !captchaToken)}
                   className="w-full font-barlow font-bold text-[15px] text-white bg-primary rounded-pill py-3.5 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed mt-1 flex items-center justify-center gap-2"
                 >
                   {loading ? (

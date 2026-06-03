@@ -23,6 +23,8 @@ export default function FormReservaActividad({ puebloSlug, prestadorId, servicio
   const [servicioId, setServicioId] = useState(servicios[0]?.id ?? "");
   const [disponibles, setDisponibles] = useState<RecursoActividadDB[]>(recursos);
   const [recursoId, setRecursoId] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function consultarDisponibilidad() {
@@ -158,6 +160,32 @@ export default function FormReservaActividad({ puebloSlug, prestadorId, servicio
         </div>
       )}
 
+      <div>
+        <label className="block font-barlow text-sm text-text-body mb-1.5">Tu nombre</label>
+        <input
+          type="text"
+          name="nombre_cliente"
+          value={nombre}
+          onChange={e => setNombre(e.target.value)}
+          required
+          placeholder="Nombre y apellido"
+          className="w-full bg-fog border border-divisor rounded-sm px-3 py-2 font-barlow text-sm focus:outline-none focus:border-primary"
+        />
+      </div>
+
+      <div>
+        <label className="block font-barlow text-sm text-text-body mb-1.5">Teléfono de contacto</label>
+        <input
+          type="tel"
+          name="telefono_cliente"
+          value={telefono}
+          onChange={e => setTelefono(e.target.value)}
+          required
+          placeholder="600 000 000"
+          className="w-full bg-fog border border-divisor rounded-sm px-3 py-2 font-barlow text-sm focus:outline-none focus:border-primary"
+        />
+      </div>
+
       {error && (
         <p className="font-barlow text-xs text-red-600 flex items-center gap-1">
           <AlertCircle size={12} /> {error}
@@ -166,7 +194,7 @@ export default function FormReservaActividad({ puebloSlug, prestadorId, servicio
 
       <button
         type="submit"
-        disabled={pending || !recursoId}
+        disabled={pending || !recursoId || !nombre.trim() || !telefono.trim()}
         className="w-full bg-commerce hover:bg-commerce-active disabled:opacity-50 text-white font-barlow font-medium px-5 py-2.5 rounded-pill transition-colors"
       >
         {pending ? "Reservando…" : "Confirmar reserva"}

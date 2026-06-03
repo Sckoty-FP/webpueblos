@@ -35,6 +35,31 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // SEC-003: headers de seguridad. La CSP se agrega aparte (necesita afinarse
+  // contra Supabase realtime/wss, el tunnelRoute /monitoring de Sentry, los tiles
+  // de Leaflet y los hosts de images.remotePatterns) — mal puesta rompe la app.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          // geolocation=(self): el repartidor publica su ubicación; cámara y
+          // micrófono se deshabilitan (no se usan).
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 // Envuelve la config con Sentry. Si faltan org/project/authToken (p.ej. en

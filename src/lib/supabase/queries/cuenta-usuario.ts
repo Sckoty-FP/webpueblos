@@ -26,6 +26,10 @@ export async function getInscripcionesUsuario(userId: string): Promise<Inscripci
   const supabase = await createClient();
   const today = new Date().toISOString().split("T")[0];
 
+  // NOTA: no se puede ordenar/filtrar por una columna de tabla embebida con notación
+  // `sesion.fecha` en el nivel superior (PostgREST devuelve PGRST100 "failed to parse order").
+  // Traemos las inscripciones del usuario y filtramos (futuras) + ordenamos por fecha en JS:
+  // el volumen por usuario es mínimo, así que es más simple y robusto que pelear con foreignTable.
   const { data, error } = await supabase
     .from("free_tour_inscripciones")
     .select(`
@@ -44,33 +48,34 @@ export async function getInscripcionesUsuario(userId: string): Promise<Inscripci
         )
       )
     `)
-    .eq("cliente_id", userId)
-    .gte("sesion.fecha", today)
-    .order("sesion.fecha", { ascending: true });
+    .eq("cliente_id", userId);
 
   if (error) {
     console.error("[getInscripcionesUsuario]", error);
     return [];
   }
 
-  return (data ?? []).map((r: Record<string, unknown>) => {
-    const sesion = r.sesion as Record<string, unknown> | null;
-    const tour = sesion?.tour as Record<string, unknown> | null;
-    const pueblo = tour?.pueblo as Record<string, unknown> | null;
-    return {
-      id: r.id as string,
-      tour_nombre: (tour?.titulo as string) ?? "Tour",
-      tour_slug: (tour?.slug as string) ?? "",
-      pueblo_slug: (pueblo?.slug as string) ?? "",
-      pueblo_nombre: (pueblo?.nombre as string) ?? "",
-      sesion_fecha: (sesion?.fecha as string) ?? "",
-      sesion_hora: (sesion?.hora as string) ?? "",
-      num_personas: r.num_personas as number,
-      estado: r.estado as InscripcionFreeTour["estado"],
-      punto_encuentro: (tour?.punto_encuentro_nombre as string | null) ?? null,
-      created_at: r.created_at as string,
-    };
-  });
+  return (data ?? [])
+    .map((r: Record<string, unknown>) => {
+      const sesion = r.sesion as Record<string, unknown> | null;
+      const tour = sesion?.tour as Record<string, unknown> | null;
+      const pueblo = tour?.pueblo as Record<string, unknown> | null;
+      return {
+        id: r.id as string,
+        tour_nombre: (tour?.titulo as string) ?? "Tour",
+        tour_slug: (tour?.slug as string) ?? "",
+        pueblo_slug: (pueblo?.slug as string) ?? "",
+        pueblo_nombre: (pueblo?.nombre as string) ?? "",
+        sesion_fecha: (sesion?.fecha as string) ?? "",
+        sesion_hora: (sesion?.hora as string) ?? "",
+        num_personas: r.num_personas as number,
+        estado: r.estado as InscripcionFreeTour["estado"],
+        punto_encuentro: (tour?.punto_encuentro_nombre as string | null) ?? null,
+        created_at: r.created_at as string,
+      };
+    })
+    .filter(i => i.sesion_fecha >= today)
+    .sort((a, b) => a.sesion_fecha.localeCompare(b.sesion_fecha));
 }
 
 // ─── Posts del muro propios ───────────────────────────────────────────────────
@@ -143,37 +148,41 @@ export interface DireccionGuardada {
 }
 
 /**
- * Direcciones guardadas del usuario (tabla `usuario_direccion_default`, migración 023).
+ * Dirección guardada del usuario.
+ *
+ * El modelo NO usa una tabla `usuario_direccion_default` (no existe): la migración 023
+ * guarda UNA dirección por defecto como columnas en `usuarios`
+ * (`direccion_default`, `lat_default`, `lon_default`). El delivery la lee/escribe vía
+ * `getDireccionDefault` / `guardarDireccionDefault` (lib/supabase/queries/usuarios.ts).
+ * Devolvemos un array de 0 ó 1 elemento para no romper el contrato del componente de perfil.
  */
 export async function getDireccionesUsuario(userId: string): Promise<DireccionGuardada[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("usuario_direccion_default")
-    .select(`
-      id, etiqueta, direccion, piso, codigo_postal, lat, lng, es_default,
-      pueblo:pueblos!usuario_direccion_default_pueblo_id_fkey (slug, nombre)
-    `)
-    .eq("usuario_id", userId);
+    .from("usuarios")
+    .select("direccion_default, lat_default, lon_default")
+    .eq("id", userId)
+    .maybeSingle();
 
   if (error) {
     console.error("[getDireccionesUsuario]", error);
     return [];
   }
 
-  return (data ?? []).map((d: Record<string, unknown>) => {
-    const pueblo = d.pueblo as Record<string, unknown> | null;
-    return {
-      id: d.id as string,
-      etiqueta: (d.etiqueta as string) ?? "Mi dirección",
-      direccion: d.direccion as string,
-      piso: (d.piso as string | null) ?? null,
-      codigo_postal: (d.codigo_postal as string | null) ?? null,
-      pueblo_slug: (pueblo?.slug as string) ?? "",
-      pueblo_nombre: (pueblo?.nombre as string) ?? "",
-      es_default: !!(d.es_default),
-      lat: (d.lat as number | null) ?? null,
-      lng: (d.lng as number | null) ?? null,
-    };
-  });
+  // Sin dirección guardada todavía (aún no hizo el primer pedido) → lista vacía.
+  if (!data?.direccion_default) return [];
+
+  return [{
+    id: userId,
+    etiqueta: "Mi dirección",
+    direccion: data.direccion_default as string,
+    piso: null,
+    codigo_postal: null,
+    pueblo_slug: "",
+    pueblo_nombre: "",
+    es_default: true,
+    lat: (data.lat_default as number | null) ?? null,
+    lng: (data.lon_default as number | null) ?? null,
+  }];
 }

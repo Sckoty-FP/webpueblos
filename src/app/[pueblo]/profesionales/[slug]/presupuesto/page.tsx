@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPrestadorBySlug } from "@/lib/supabase/queries/prestadores";
 import { getPuebloBySlug } from "@/lib/supabase/queries/pueblos";
-import { crearPresupuesto } from "@/lib/supabase/queries/presupuestos";
+import { solicitarPresupuestoPublico } from "@/lib/supabase/queries/presupuestos";
 import { rateLimit } from "@/lib/rate-limit";
 import { PUBLIC_FORM } from "@/lib/rate-limit/policies";
 import SolicitudPresupuestoForm from "@/components/sections/public/SolicitudPresupuestoForm";
@@ -49,21 +49,15 @@ export default async function SolicitudPresupuestoPage({ params }: Props) {
 
     if (!prestador) return { ok: false, error: "Profesional no disponible." };
 
-    try {
-      await crearPresupuesto({
-        prestador_id:         prestador.id,
-        cliente_nombre:       nombre,
-        cliente_email:        email     || undefined,
-        cliente_telefono:     telefono  || undefined,
-        descripcion,
-        lineas:               [{ descripcion: "Por presupuestar", importe: 0 }],
-        iva_porcentaje:       21,
-        es_solicitud_publica: true,
-      });
-      return { ok: true };
-    } catch (e) {
-      return { ok: false, error: (e as Error).message };
-    }
+    // Vía RPC SECURITY DEFINER: el visitante es anónimo y RLS le niega el INSERT
+    // directo. La función solo permite crear una solicitud (borrador). Ver 044.
+    return solicitarPresupuestoPublico({
+      prestador_id:     prestador.id,
+      cliente_nombre:   nombre,
+      descripcion,
+      cliente_email:    email    || undefined,
+      cliente_telefono: telefono || undefined,
+    });
   }
 
   return (

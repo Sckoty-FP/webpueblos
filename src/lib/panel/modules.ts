@@ -109,7 +109,10 @@ export function getModules(
     // Verticales — encargado puede operar reservas/mesas/carta (read op)
     propiedades:    tienePropiedades && !esEncargado,
     reservas:       tieneReservas,
-    mesas:          tieneMesas,
+    // Módulo Mesas desactivado (decisión 2026-06-03): el restaurante gestiona sus
+    // propias mesas; la gestión/QR de mesa se retomará en el ERP propio a futuro.
+    // `tieneMesas` se mantiene calculado para reactivarlo con un solo cambio aquí.
+    mesas:          false && tieneMesas,
     carta:          tieneCarta,
     actividades:    tieneActividades,
     profesionales:  tieneProfesionales && !esEncargado,

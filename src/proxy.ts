@@ -1,6 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Middleware de la app (en este Next se llama `proxy`, no `middleware`).
+ *
+ * Hace dos cosas en cada request:
+ *  1. Refresca la sesión de Supabase y la deja en las cookies de la respuesta.
+ *  2. Redirige según el estado de sesión (rutas protegidas → login, y al revés).
+ *
+ * Es la PRIMERA capa de protección (UX + defensa en profundidad), NO la
+ * autorización final: eso lo deciden los guards en el render y RLS. Ver
+ * MODULO-AUTH/01-ARQUITECTURA.md §5.
+ */
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -25,8 +36,12 @@ export async function proxy(request: NextRequest) {
     }
   );
 
+  // getUser() valida la sesión contra el servidor de Supabase (más seguro que
+  // getSession(), que solo confía en la cookie).
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Rutas que exigen sesión. /admin y /repartidor NO están acá: se protegen en su
+  // propio layout.tsx + RLS. Si agregás una sección privada nueva, sumá su prefijo.
   const protectedPaths = ["/perfil", "/panel"];
   const isProtected = protectedPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)
