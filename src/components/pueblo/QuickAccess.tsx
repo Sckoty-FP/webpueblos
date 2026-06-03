@@ -117,7 +117,7 @@ export default function QuickAccess({ puebloSlug, hayDelivery = false }: Props) 
       : [{
           icon: <Compass size={22} strokeWidth={1.5} />,
           label: "Free Tours",
-          sub: "Tours gratuitos",
+          sub: "Pago a voluntad",
           href: `/${s}/free-tour`,
           color: "#0070cc",
           bg: "#0070cc0f",

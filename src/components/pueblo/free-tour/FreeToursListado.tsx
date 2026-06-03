@@ -66,7 +66,7 @@ export default function FreeToursListado({ puebloSlug, tours }: Props) {
                   <div className="absolute inset-0 photo-ruta1" />
                 )}
                 <span className="absolute top-2.5 left-2.5 font-barlow text-[10px] font-bold uppercase tracking-wider text-surface-dark bg-accent-warm px-2.5 py-1 rounded-pill">
-                  GRATIS
+                  FREE TOUR
                 </span>
               </div>
 

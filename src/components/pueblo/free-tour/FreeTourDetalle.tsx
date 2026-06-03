@@ -136,7 +136,7 @@ export default function FreeTourDetalle({ pueblo, tour, sesiones }: Props) {
             <h3 className="font-fraunces text-xl font-semibold text-text-body mb-1">
               Reservá tu plaza
             </h3>
-            <p className="font-barlow text-sm text-text-muted mb-5">Es gratis. Cupo limitado.</p>
+            <p className="font-barlow text-sm text-text-muted mb-5">Al final, le dás al guía lo que quieras. Cupo limitado.</p>
             {sesiones.length === 0 ? (
               <p className="font-barlow text-base text-text-muted">
                 No hay sesiones próximas. Volvé pronto.

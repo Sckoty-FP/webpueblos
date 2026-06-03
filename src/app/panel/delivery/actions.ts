@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { esTransicionValida } from "@/lib/delivery/estados";
+import { esTransicionValidaNegocio } from "@/lib/delivery/estados";
 import { notificarClientePedido } from "@/lib/push/notificar-eventos";
 import type { EstadoPedidoDelivery, ModoDelivery, DeliveryConfigDB, DeliveryHorarioDB } from "@/types/delivery";
 
@@ -69,7 +69,7 @@ export async function avanzarEstadoPedido(
   // confiar en que la UI ofrezca el botón correcto (defensa en profundidad).
   const { data: actual, error: errLeer } = await supabase
     .from("pedidos_delivery")
-    .select("estado")
+    .select("estado, delivery_modo")
     .eq("id", pedidoId)
     .eq("prestador_id", prestadorId)
     .single();
@@ -78,8 +78,11 @@ export async function avanzarEstadoPedido(
   if (!actual) throw new Error("Pedido no encontrado");
 
   const estadoActual = actual.estado as EstadoPedidoDelivery;
-  if (!esTransicionValida(estadoActual, nuevoEstado)) {
-    throw new Error(`Transición inválida: ${estadoActual} → ${nuevoEstado}`);
+  // Validación mode-aware: en modo plataforma el negocio NO puede marcar en_camino
+  // ni entregado (eso lo hace el repartidor desde su portal). Defensa en profundidad:
+  // aunque la UI oculte el botón, el backend lo rechaza igual.
+  if (!esTransicionValidaNegocio(estadoActual, nuevoEstado, actual.delivery_modo)) {
+    throw new Error(`Transición inválida para el negocio: ${estadoActual} → ${nuevoEstado}`);
   }
 
   // Compare-and-set: el UPDATE solo procede si el estado no cambió entremedio

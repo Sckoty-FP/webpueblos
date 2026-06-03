@@ -24,7 +24,7 @@ export default function PreviewFreeTour({ puebloSlug, tours }: Props) {
         <SectionHeader
           eyebrow="Free Tours"
           title="Conocé tu pueblo con un guía"
-          subtitle="Tours guiados gratuitos. Reservá tu plaza en un clic."
+          subtitle="Tours guiados con vecinos del pueblo. Reservá tu plaza en un clic."
           cta={{ label: "Ver todos →", href: `/${puebloSlug}/free-tour` }}
           variant="dark"
         />
@@ -59,7 +59,7 @@ export default function PreviewFreeTour({ puebloSlug, tours }: Props) {
                     style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 50%)" }}
                   />
                   <span className="absolute top-3 left-3 inline-flex items-center text-[10px] font-medium uppercase tracking-wider bg-accent-warm text-surface-dark px-2.5 py-1 rounded-pill">
-                    Gratis
+                    Free tour
                   </span>
                 </div>
 

@@ -6,6 +6,8 @@ import {
   esEstadoFinal,
   siguienteEstado,
   esTransicionValida,
+  esTransicionValidaNegocio,
+  siguienteEstadoNegocio,
   labelBotonAvanzar,
 } from "@/lib/delivery/estados";
 import type { EstadoPedidoDelivery } from "@/types/delivery";
@@ -115,6 +117,51 @@ describe("invariantes de los conjuntos de estados", () => {
   it("el flujo feliz empieza en pendiente_pago y termina en entregado", () => {
     expect(FLUJO_PEDIDO[0]).toBe("pendiente_pago");
     expect(FLUJO_PEDIDO[FLUJO_PEDIDO.length - 1]).toBe("entregado");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Reglas por ACTOR — el negocio no marca en_camino/entregado en modo plataforma
+// (regresión: el restaurante podía pasar el pedido a "entregado", que es del repartidor)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("siguienteEstadoNegocio — modo plataforma", () => {
+  it("avanza normalmente hasta listo", () => {
+    expect(siguienteEstadoNegocio("pendiente_pago", "plataforma")).toBe("aceptado");
+    expect(siguienteEstadoNegocio("aceptado", "plataforma")).toBe("preparando");
+    expect(siguienteEstadoNegocio("preparando", "plataforma")).toBe("listo");
+  });
+
+  it("NO ofrece avance desde listo (el negocio asigna repartidor)", () => {
+    expect(siguienteEstadoNegocio("listo", "plataforma")).toBeNull();
+  });
+
+  it("NO ofrece avance desde en_camino (entregar es del repartidor)", () => {
+    expect(siguienteEstadoNegocio("en_camino", "plataforma")).toBeNull();
+  });
+});
+
+describe("siguienteEstadoNegocio — modo propio", () => {
+  it("avanza el flujo completo hasta entregado (reparto propio del negocio)", () => {
+    expect(siguienteEstadoNegocio("listo", "propio")).toBe("en_camino");
+    expect(siguienteEstadoNegocio("en_camino", "propio")).toBe("entregado");
+  });
+});
+
+describe("esTransicionValidaNegocio", () => {
+  it("plataforma: rechaza que el negocio marque entregado o en_camino", () => {
+    expect(esTransicionValidaNegocio("en_camino", "entregado", "plataforma")).toBe(false);
+    expect(esTransicionValidaNegocio("listo", "en_camino", "plataforma")).toBe(false);
+  });
+
+  it("plataforma: permite avanzar hasta listo y cancelar", () => {
+    expect(esTransicionValidaNegocio("preparando", "listo", "plataforma")).toBe(true);
+    expect(esTransicionValidaNegocio("preparando", "cancelado", "plataforma")).toBe(true);
+  });
+
+  it("propio: permite el flujo completo incl. entregado", () => {
+    expect(esTransicionValidaNegocio("listo", "en_camino", "propio")).toBe(true);
+    expect(esTransicionValidaNegocio("en_camino", "entregado", "propio")).toBe(true);
   });
 });
 

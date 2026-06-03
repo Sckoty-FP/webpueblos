@@ -92,7 +92,7 @@ export async function inscribirseAction(fd: FormData): Promise<{
             </div>
           </div>
           <p style="font-size:13px;color:#6b6b6b;background:#fff3cd;border-radius:8px;padding:12px">
-            💡 La inscripción es gratuita. Si disfrutás el tour, podés darle una propina al guía al final.
+            💡 Es un free tour: no pagás nada por adelantado. Al final, le dás al guía lo que consideres.
           </p>
           <p style="font-size:13px;color:#6b6b6b;margin-top:16px">
             Si no podés asistir, cancelá con antelación para liberar tu plaza a otras personas.

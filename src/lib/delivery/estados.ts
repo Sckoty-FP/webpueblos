@@ -12,7 +12,7 @@
  * Desde cualquier estado no terminal el negocio puede cancelar/rechazar.
  */
 
-import type { EstadoPedidoDelivery } from "@/types/delivery";
+import type { EstadoPedidoDelivery, ModoDelivery } from "@/types/delivery";
 
 /** Secuencia lineal del flujo feliz, en orden. */
 export const FLUJO_PEDIDO: readonly EstadoPedidoDelivery[] = [
@@ -85,6 +85,52 @@ export function esTransicionValida(
 
   // Avance lineal al sucesor inmediato.
   return siguienteEstado(origen) === destino;
+}
+
+/**
+ * Siguiente estado que el NEGOCIO puede fijar desde su panel, según el modo de reparto.
+ *
+ * En modo `plataforma` el reparto lo hace un repartidor de PUEBLO: el negocio avanza
+ * hasta `listo` y desde ahí ASIGNA repartidor (esa acción pone `en_camino`). Marcar
+ * `en_camino` a mano o `entregado` NO le corresponde al negocio — la entrega la cierra
+ * el repartidor desde su portal. En modo `propio` el negocio gestiona su propio reparto,
+ * así que avanza el flujo completo hasta `entregado`.
+ *
+ * Devuelve `null` cuando el negocio no debe ofrecer botón de avance para ese estado/modo.
+ */
+export function siguienteEstadoNegocio(
+  estado: EstadoPedidoDelivery,
+  modo: ModoDelivery | null | undefined,
+): EstadoPedidoDelivery | null {
+  const sig = siguienteEstado(estado);
+  if (sig === null) return null;
+  // En plataforma, el negocio no marca en_camino (lo hace al asignar repartidor)
+  // ni entregado (lo hace el repartidor).
+  if (modo === "plataforma" && (estado === "listo" || estado === "en_camino")) {
+    return null;
+  }
+  return sig;
+}
+
+/**
+ * Igual que `esTransicionValida`, pero desde la óptica del NEGOCIO: en modo
+ * `plataforma` el negocio NO puede fijar `en_camino` ni `entregado` (defensa en
+ * profundidad en el server action, no solo ocultar el botón en la UI).
+ * Cancelar/rechazar sigue permitido en cualquier modo.
+ */
+export function esTransicionValidaNegocio(
+  origen: EstadoPedidoDelivery,
+  destino: EstadoPedidoDelivery,
+  modo: ModoDelivery | null | undefined,
+): boolean {
+  if (!esTransicionValida(origen, destino)) return false;
+  if (destino === "cancelado" || destino === "rechazado" || destino === "fallido") {
+    return true;
+  }
+  if (modo === "plataforma" && (destino === "en_camino" || destino === "entregado")) {
+    return false;
+  }
+  return true;
 }
 
 /** Etiqueta del botón de avance para el panel del negocio. */

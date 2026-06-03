@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeToPedidos, playNotificacionPedido, type PedidoRealtimeEvent } from "@/lib/supabase/realtime/pedidos";
 import { aceptarPedido, rechazarPedido, avanzarEstadoPedido } from "@/app/panel/delivery/actions";
-import { siguienteEstado, labelBotonAvanzar } from "@/lib/delivery/estados";
+import { siguienteEstadoNegocio, labelBotonAvanzar } from "@/lib/delivery/estados";
 import type { PedidoDeliveryDB, PedidoItemDB, EstadoPedidoDelivery, RepartidorDB } from "@/types/delivery";
 import AsignarRepartidorModal from "./AsignarRepartidorModal";
 import {
@@ -166,7 +166,8 @@ function DetailPane({
   onBack?: () => void;
   isPending: boolean;
 }) {
-  const siguiente = siguienteEstado(pedido.estado);
+  // Mode-aware: en plataforma el negocio no avanza a en_camino/entregado (eso es del repartidor).
+  const siguiente = siguienteEstadoNegocio(pedido.estado, pedido.delivery_modo);
   const puedeAsignar = pedido.delivery_modo === "plataforma"
     && (pedido.estado === "listo" || pedido.estado === "preparando" || pedido.estado === "aceptado")
     && !pedido.repartidor_id;
@@ -568,7 +569,7 @@ export default function PedidosView({ prestadorId, pedidosIniciales, repartidore
 
   const handleAvanzar = () => {
     if (!pedidoSeleccionado) return;
-    const sig = siguienteEstado(pedidoSeleccionado.estado);
+    const sig = siguienteEstadoNegocio(pedidoSeleccionado.estado, pedidoSeleccionado.delivery_modo);
     if (!sig) return;
     startTransition(async () => {
       await avanzarEstadoPedido(pedidoSeleccionado.id, sig);

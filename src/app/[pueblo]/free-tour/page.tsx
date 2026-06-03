@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!pueblo) return { title: "Pueblo no encontrado" };
   return {
     title: `Free Tours en ${pueblo.nombre}`,
-    description: `Free tours guiados gratuitos en ${pueblo.nombre}. Reservá tu plaza.`,
+    description: `Free tours guiados en ${pueblo.nombre} — pago a voluntad. Reservá tu plaza.`,
     alternates: { canonical: `https://pueblo.app/${pueblo.slug}/free-tour` },
   };
 }
@@ -42,7 +42,7 @@ export default async function FreeTourListadoPage({ params }: Props) {
             Conocé {pueblo.nombre} con vecinos.
           </h1>
           <p className="font-barlow text-base md:text-lg text-white/60 max-w-xl leading-relaxed">
-            Tours gratis con guías del pueblo. Pagás la propina que te parezca al final. Sin cuotas ocultas.
+            Tours guiados con vecinos del pueblo. Al final le dás al guía lo que vos quieras.
           </p>
         </div>
       </div>
